@@ -83,7 +83,7 @@ var buildToggleTableRow = function(key, status) {
         'width': '50px',
         'height': '17px',
         'border-radius' : '20px',
-        'background-image': 'url("http://puu.sh/o9HHe/afc2d04137.png")',
+        'background-image': 'url("https://puu.sh/o9HHe/afc2d04137.png")',
         'background-size': '114px 18px',
         'background-position' : '-17px',
         'transition' : 'background-position 0.5s'
