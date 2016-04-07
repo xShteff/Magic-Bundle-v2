@@ -158,28 +158,34 @@ MagicWindow.showTab = function(id) {
         else
             $(this).slideDown('1000');
     });
-    switch (id) {
-        case "notifications":
-            this.window.setTitle('Better Notifications');
-            this.window.setMiniTitle('Better Notifications');
-            break;
-        case "veteran":
-            this.window.setTitle('Veteran Point Counter');
-            this.window.setMiniTitle('Veteran Point Counter');
-            break;
-        case "taskkiller":
-            this.window.setTitle('Task Killer');
-            this.window.setMiniTitle('Task Killer');
-            break;
-        case "jobdesign":
-            this.window.setTitle('Job Window Re-Design');
-            this.window.setMiniTitle('Job Window Re-Design');
-            break;
-        case "multipurchase":
-            this.window.setTitle('Multi-Purchase');
-            this.window.setMiniTitle('Multi-Purchase');
-            break;
-    }
+    this.window.setTitle(MagicFeatures[id]["fullName"]);
+    this.window.setMiniTitle(MagicFeatures[id]["fullName"]);
+
 };
+
+var initialiseButton = function() {
+    var icon = $('<div></div>').attr({
+            'title': 'Magic Menu',
+            'class': 'menulink'
+        }).css({
+            'background': 'url("http://puu.sh/gbV7X/4703da6942.png")',
+            'background-position': '0px 0px'
+        }).mouseleave(function() {
+            $(this).css("background-position", "0px 0px");
+        }).mouseenter(function(e) {
+            $(this).css("background-position", "25px 0px");
+        }).click(function() {
+            MagicWindow.open();
+        });
+
+        var cap = $('<div></div>').attr({
+            'class': 'menucontainer_bottom'
+        }); 
+
+        $("#ui_menubar .ui_menucontainer :last").after($('<div></div>').attr({
+            'class': 'ui_menucontainer',
+            'id': 'magicbundle_init_button'
+        }).append(icon).append(cap));
+}
 initialiseStorage();
 MagicWindow.open();
