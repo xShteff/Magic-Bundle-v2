@@ -1,29 +1,34 @@
 var MagicFeatures = {
     'notifications' : {
+        'status' : '',
         'iconURL' : 'https://westzzs.innogamescdn.com/images/interface/chat/chat.gif',
         'releaseDate' : '16th September 2014',
         'fullName' : 'Better Notifications',
         'description' : 'A simple userscript that displays a notification every time you get a new private message. In order for the script to work, you must press the chat bubble that will appear under the settings button, and allow your browser to display notifications for this page.'
     },
     'veteran' : {
+        'status' : '',
         'iconURL' : 'https://puu.sh/gdsek/93e29796d4.png',
         'releaseDate' : '16th September 2014',
         'fullName' : 'Veteran Point Counter',
         'description' : 'A simple display of your amount of veteran points, placed conveniently under the top bar.'
     },
     'taskkiller' : {
+        'status' : '',
         'iconURL' : 'https://puu.sh/gdsnY/ecb27d9300.png',
         'releaseDate' : '21th September 2014',
         'fullName' : 'Task Killer',
         'description' : 'A perfect script for lazy people (Like the guy that made this userscript). Tired of clicking 9 times to cancel your jobs? No problem! Just press the button placed on the left of the queued jobs, and all your jobs will be gone! It\'s MAGIC!'
     },
     'jobdesign' : {
+        'status' : '',
         'iconURL' : 'https://westzzs.innogamescdn.com/images/icons/hammer.png',
         'releaseDate' : '31st October 2014',
         'fullName' : 'Job Window Re-Design',
         'description' : 'An another script for lazy people! This userscript will replace the counter inside the job window, with a custom dropdown! How amazing is that?'
     },
     'multipurchase' : {
+        'status' : '',
         'iconURL' : 'https://puu.sh/lfvxl/187895d35c.png',
         'releaseDate' : '10th November 2015',
         'fullName' : 'Multi-Purchase',
@@ -31,19 +36,49 @@ var MagicFeatures = {
     }
 };
 
+var initialiseStorage = function() {
+    $.each(MagicFeatures, function(key) {
+        if(localStorage.getItem("magicbundle_feature_" + key) === null){
+            localStorage.setItem("magicbundle_feature_" + key, "deactivated");
+            MagicFeatures[key]["status"] = "deactivated";
+        } else if(localStorage.getItem("magicbundle_feature_" + key) === "activated") {
+            MagicFeatures[key]["status"] = "activated";
+        } else if(localStorage.getItem("magicbundle_feature_" + key) === "deactivated") {
+            MagicFeatures[key]["status"] = "deactivated";
+        }
+    })
+}
+
+var changeFeatureStatus = function(key) {
+    var s1 = MagicFeatures[key]['status'];
+    var s2 = localStorage.getItem('magicbundle_feature_' + key);
+    if(s1 != s2){
+        return "Error"; //Should never happen, hopefully.
+    } else {
+        if(s1 == "activated"){
+            MagicFeatures[key]['status'] = "deactivated";
+            localStorage.setItem('magicbundle_feature_' + key, "deactivated");
+        } else {
+            MagicFeatures[key]['status'] = "activated";
+            localStorage.setItem('magicbundle_feature_' + key, "activated");
+        }
+    }
+}
+
 window.MagicWindow = {
     window: null,
     currentTab: "notifications",
 };
 
-var styling = '<style>.on { background-position: -49px !important;  } </style>';
+var styling = '<style>.activated { background-position: -49px !important;  } </style>';
 $('head').append(styling);
 
-var buildToggleTableRow = function(id) {
+var buildToggleTableRow = function(key, status) {
+    console.log(status);
     var tColOne = $('<td>').text('Toggle: ').css('font-weight', 'bold');
     var toggleButton = $('<div>').attr({
-        'id' : 'xsht-toggle-' + id,
-        'class' : 'xsht-button'
+        'id' : 'xsht-toggle-' + key,
+        'class' : 'xsht-button ' + status
     }).css({
         'width': '50px',
         'height': '17px',
@@ -53,8 +88,10 @@ var buildToggleTableRow = function(id) {
         'background-position' : '-17px',
         'transition' : 'background-position 0.5s'
     }).click(function() {
-        $(this).toggleClass('on');
+        $(this).toggleClass('activated');
+        changeFeatureStatus(key);
     });
+
     var tColTwo = $('<td>').append(toggleButton);
     var tRow = $('<tr>').append(tColOne).append(tColTwo);
     return tRow;
@@ -95,7 +132,7 @@ MagicWindow.open = function(tab) {
 
     $.each(MagicFeatures, function(key) {
         var contentTable = $('<table>').css('padding-top', '10px');
-        contentTable.append(buildToggleTableRow(key));
+        contentTable.append(buildToggleTableRow(key, MagicFeatures[key]["status"]));
         contentTable.append(buildReleaseDateRow(MagicFeatures[key]["releaseDate"]));
         contentTable.append(buildDescriptionRow(MagicFeatures[key]["description"]));
         contentTable.append(buildWarningRow());
@@ -144,4 +181,5 @@ MagicWindow.showTab = function(id) {
             break;
     }
 };
+initialiseStorage();
 MagicWindow.open();
