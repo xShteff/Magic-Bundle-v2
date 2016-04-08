@@ -54,6 +54,13 @@ var MagicFeatures = {
         'releaseDate': '10th November 2015',
         'fullName': 'Multi-Purchase',
         'description': 'A simple userscript that will allow you to purchase multiple items from the store! Amounts bigger than 27 will suffer a delay, in order to avoid flood protection.</i> <br> Kudos to <a href="https://forum.the-west.net/member.php?u=11236" target="_blank">Slygoxx</a> for helping.'
+    },
+    'neonxpbar': {
+        'status': '',
+        'iconURL': 'https://zz1.beta.the-west.net/images/icons/star.png',
+        'releaseDate': '9th April 2016',
+        'fullName': 'NeonXPBar',
+        'description': '#soon'
     }
 };
 
@@ -74,9 +81,23 @@ var enableFeature = function(key) {
         case "multipurchase":
 
             break;
+        case "neonxpbar":
+            enableNeonXP();
+            break;
     }
 }
-
+var enableNeonXP = function() {
+    var deg = 10;
+    var adder = 5;
+    var run = true;
+    var hue = function() {
+        $('#ui_experience_bar .fill_wrap .fill').css('-webkit-filter', 'hue-rotate(' + deg % 361 + 'deg)');
+        deg += adder;
+        if (run)
+            setTimeout(hue, 50);
+    }
+    hue();
+}
 var requestNotification = function() {
     if (!window.Notification)
         new UserMessage("Sorry, notifications are not supported.").show();
@@ -208,7 +229,7 @@ var changeFeatureStatus = function(key) {
     var s2 = localStorage.getItem('magicbundle_feature_' + key);
     if (s1 != s2) {
         return "Error"; //Should never happen, hopefully.
-    } else {
+    } else { 
         if (s1 == "activated") {
             new UserMessage("'" + MagicFeatures[key]["fullName"] + "' is now disabled.").show();
             MagicFeatures[key]['status'] = "deactivated";
@@ -311,7 +332,7 @@ MagicWindow.open = function(tab) {
         MagicWindow.showTab(id);
     }
 
-    MagicWindow.window = wman.open("magicwindow", "Magic Window").setMiniTitle("Magic Window").setSize(400, 350);
+    MagicWindow.window = wman.open("magicwindow", "Magic Window").setMiniTitle("Magic Window").setSize(420, 370);
 
     $.each(MagicFeatures, function(key) {
         var contentTable = $('<table>').css('padding-top', '10px');
