@@ -62,11 +62,15 @@ script.textContent = '(' + (function() {
             'status': '',
             'iconURL': 'https://zz1.beta.the-west.net/images/icons/star.png',
             'releaseDate': '9th April 2016',
-            'fullName': 'NeonXPBar',
-            'description': '#soon'
+            'fullName': 'Rainbow Experience Bar',
+            'description': 'Tired of the old boring yellow experience bar? Enable this feature, reload the game, and enjoy your brand new "rainbow" experience bar!'
         }
     };
 
+    /*
+     * It activates a certain feature, chosen by it's key.
+     * @param {String} key
+    */
     var enableFeature = function(key) {
         switch (key) {
             case "notifications":
@@ -90,10 +94,19 @@ script.textContent = '(' + (function() {
         }
     }
 
+    /*
+     * It enables the multi-purchase feature. This feature allows the user to purchase multiple items from the shops.
+    */
     var enableMultiPurchase = function() {
-        var styling = "<style>#xsht_load_screen { position:absolute; top: 0px; left: 0px; height:100%; width:100%; z-index:100; display:none; } </style>";
-        $('head').append(styling);
-        var loadingScreen = $('<div></div>').attr('id', 'xsht_load_screen');
+        var loadingScreen = $('<div></div>').attr('id', 'xsht_load_screen').css({
+            'position': 'absolute',
+            'top': '0px',
+            'left': '0px',
+            'height': '100%',
+            'width': '100%',
+            'z-index': '100',
+            'display': 'none'
+        });
         $('body').append(loadingScreen);
         var progressBar = new west.gui.Progressbar(0, 100);
         Trader.amountChanged = function() {
@@ -208,6 +221,10 @@ script.textContent = '(' + (function() {
             $("#xsht_load_screen #xsht_bar_timer").html(minutes + ":" + (seconds < 10 ? "0" + seconds : seconds));
         };
     }
+
+    /*
+     * It enables the task-killer. This feature allows the user to cancel all the queued jobs.
+    */
     var enableTaskKiller = function() {
         var icon = $('<div></div>').attr({
             'title': "Cancel all jobs",
@@ -240,6 +257,10 @@ script.textContent = '(' + (function() {
             "z-index": "-1"
         }).append(icon).append(fix));
     }
+
+    /*
+     * It enables the "Neon" Experience bar, that changes color constantly.
+    */
     var enableNeonXP = function() {
         var deg = 10;
         var adder = 5;
@@ -255,20 +276,10 @@ script.textContent = '(' + (function() {
         }
         hue();
     }
-    var requestNotification = function() {
-        if (!window.Notification) {
-            new UserMessage("Sorry, notifications are not supported.").show();
-        } else {
-            Notification.requestPermission(function(p) {
-                if (p === 'denied') {
-                    new UserMessage("Permission wasn\'t granted.").show();
-                } else if (p === 'granted') {
-                    new UserMessage("Notifications have been enabled!").show();
-                }
-            });
-        }
-    }
 
+    /*
+     * It enables the Veteran Point counter. A convenient counter placed under the topbar, that displays the amount of VPs you have.
+    */
     var enableVPCounter = function() {
         var valText = $('<span>').css({
             'position': 'absolute',
@@ -324,6 +335,9 @@ script.textContent = '(' + (function() {
         });
     }
 
+    /*
+     * It replaces the +/- button inside the job window with a dropdowon.
+    */
     var enableJobRework = function() {
         JobWindow.getJobAmount = function() {
             var amount = parseInt(this.window.$("#tw_work_menu_value").children("option").filter(":selected").text(), 10);
@@ -339,13 +353,35 @@ script.textContent = '(' + (function() {
         };
     }
 
+
+    /*
+     * It sends a request to the user to enable the browser notifications.
+    */
+    var requestNotification = function() {
+        if (!window.Notification) {
+            new UserMessage("Sorry, notifications are not supported.").show();
+        } else {
+            Notification.requestPermission(function(p) {
+                if (p === 'denied') {
+                    new UserMessage("Permission wasn\'t granted.").show();
+                } else if (p === 'granted') {
+                    new UserMessage("Notifications have been enabled!").show();
+                }
+            });
+        }
+    }
+
+    /*
+     * It enables the better-notifications feature. This feature replaces the standard in-game popup.
+    */
     var enableNotifications = function() {
         requestNotification();
         EventHandler.listen("chat_tell_received", function(room) {
             function notify() {
-                var regex = /<td(.*)chat_text(.*)>(.*)<\/td>/ig;
+                var regex = /<td(.*)chat_text(.*?)>(.*)<\/td>/ig;
+                var final = regex.exec(room.history[room.history.length - 1])[3];
                 new Notification('New Message from ' + room.client.pname, {
-                    body: regex.exec(room.history[room.history.length - 1])[3],
+                    body: final.replace(/<img.*?>/g, ""),
                     icon: 'http://puu.sh/oaqQS/1c5bbb0c5c.jpg'
                 });
             }
@@ -407,6 +443,9 @@ script.textContent = '(' + (function() {
         currentTab: "notifications",
     };
 
+    /*
+     * Manually injecting some styling to the game. Don't ever do this pls.
+    */
     var styling = '<style>.activated { background-position: -49px !important;  } </style>';
     $('head').append(styling);
 
@@ -480,7 +519,8 @@ script.textContent = '(' + (function() {
     }
 
     /*
-     * Generating and opening the window.
+     * Generating and opening the window. Eventually, you can open the window at a certain tab, otherwise it'll open at the most recent visited.
+     * @param {String} tab
      */
     MagicWindow.open = function(tab) {
         if (undefined === tab) tab = this.currentTab;
@@ -556,14 +596,43 @@ script.textContent = '(' + (function() {
     }
 
     /*
-     * Setting up the local storage and opening the window. (WIP)
+     * Registering the userscript to the game API.
+    */
+    var registerToWestApi = function() {
+        scriptInfo = "<h1>Features:</h1>";
+        $.each(MagicFeatures, function(key) {
+            scriptInfo += "<li><b>" + MagicFeatures[key]["fullName"] + "</b>: ";
+            if(MagicFeatures[key]["status"] === "activated") {
+                scriptInfo += "<span style='color:green;'>" + MagicFeatures[key]["status"] + "</span></br>";
+            } else {
+                scriptInfo += "<span style='color:red;'>" + MagicFeatures[key]["status"] + "</span></br>";
+            }
+        });
+        scriptInfo += "<h1>Other scripts:</h1>";
+        scriptInfo += "<li><a href='https://xshteff.github.io/userscripts/twbf.user.js' target='_blank'>TW Best Friends</a>";
+        scriptInfo += "<li><a href='https://xshteff.github.io/userscripts/kappa.user.js' target='_blank'>TW Kappa</a>";
+        scriptInfo += "<li><a href='https://xshteff.github.io/userscripts/twzoom.user.js' target='_blank'>TW Zoom</a></ul>";
+        window.scriptyscript = {
+            script: TheWestApi.register('twmagicbundle', 'The West Magic', '2.1', Game.version.toString(), 'xShteff', 'https://xshteff.github.io'),
+            setGui: function() {
+                this.script.setGui(scriptInfo);
+            },
+            init: function() {
+                this.setGui();
+            }
+        };
+        window.scriptyscript.init();
+    }
+
+    /*
+     * Initialising the localstorage, registering the script to the API and adding the button.
      */
     var initialiseScript = function() {
         initialiseStorage();
+        registerToWestApi();
         initialiseButton();
     }
 
     initialiseScript();
-
 }).toString() + ')()';
 document.head.appendChild(script);
