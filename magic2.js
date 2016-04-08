@@ -73,18 +73,169 @@ var enableFeature = function(key) {
             enableVPCounter();
             break;
         case "taskkiller":
-
+            enableTaskKiller();
             break;
         case "jobdesign":
             enableJobRework();
             break;
         case "multipurchase":
-
+            enableMultiPurchase();
             break;
         case "neonxpbar":
             enableNeonXP();
             break;
     }
+}
+
+var enableMultiPurchase = function() {
+    var styling = "<style>#xsht_load_screen { position:absolute; top: 0px; left: 0px; height:100%; width:100%; z-index:100; display:none; } </style>";
+    $('head').append(styling);
+    var loadingScreen = $('<div></div>').attr('id', 'xsht_load_screen');
+    $('body').append(loadingScreen);
+    var progressBar = new west.gui.Progressbar(0, 100);
+    Trader.amountChanged = function() {
+        var totalPrice = $('#xsht_item_buy_amount').val() * $('#xsht_item_price').text();
+        $('#xsht_total_price').text('$ ' + totalPrice);
+        if (totalPrice > Character.deposit + Character.money) {
+            $('#xsht_total_price').css({
+                'color': 'red',
+                'font-weight': 'bold'
+            });
+            $('.tw2gui_dialog_actions .tw2gui_button .textart_title:contains("Yes")').parent().fadeOut();
+        } else {
+            $('#xsht_total_price').css({
+                'color': 'black',
+                'font-weight': 'normal'
+            });
+            $('.tw2gui_dialog_actions .tw2gui_button .textart_title:contains("Yes")').parent().fadeIn();
+        }
+    }
+    var buyStatusText = "All the products were bought.";
+    var buyStatus = UserMessage.TYPE_SUCCESS;
+    Trader.initProgress = function(bar) {
+        $('#xsht_load_screen').html('<div id="xsht_load_screen"></div>');
+        var barContainer = $('<div></div>').attr('id', 'xsht_bar_container').append(bar.getMainDiv());
+        $('#xsht_load_screen').append(barContainer);
+        $('#xsht_load_screen').fadeIn();
+        if (bar.maxValue > 1)
+            new UserMessage("Started buying " + bar.maxValue + " products! Please wait until the process is completed.", UserMessage.TYPE_ERROR).show();
+        $('#xsht_load_screen .tw2gui_progressbar_progress').append("<span id='xsht_bar_timer' style=\"z-index: 2; right: 5px; top: 0; bottom: 0; position: absolute; color: white; font-size: 12px;line-height: 19px;text-shadow: black 1px 1px 1px;\">1:00</span>");
+        Trader.startTime = new Date().getTime() / 1000;
+    }
+
+    Trader.increaseProgress = function() {
+        progressBar.increase(1);
+        if (progressBar.value == progressBar.maxValue) {
+            $('#xsht_load_screen').fadeOut();
+            if (progressBar.maxValue > 1)
+                new UserMessage(buyStatusText, buyStatus).show();
+        }
+        Trader.updateTimer();
+    }
+
+    Trader.buy_popup_xhtml = '<div class="bag_item float_left"><img src="%buy_img%" /></div>' + '<span class="item_popup_sell_value">' + 'Single Purchase price:'.escapeHTML() + '$ <span id="xsht_item_price">%buy_popup_price%</span></span><br />' + '<span style="font-size:12px;">' + 'Are you sure you want to purchase this item?'.escapeHTML() + '<br>Amount: ' + '<span class="tw2gui_textfield"><span><input type="number" id="xsht_item_buy_amount" value="1" min="1" max="2147483647" style="width:75px" onchange="Trader.amountChanged()" onkeyup="Trader.amountChanged()"><span class="search_lable_span" style="display: none;">Amount</span></span></span>' + '<div id="xsht_total_price_desc" style="font-size:12px;">Total price: <span id="xsht_total_price">$ %buy_popup_price%</span></div>' + '</span>';
+    Trader.buyDialog = function(item_id) {
+        var buy_popup;
+        if ($('#buy_popup')) {
+            $('#buy_popup').remove();
+        }
+        buy_popup = $('<div id="buy_popup" style="opacity: 0.9;"></div>');
+        var item = Trader.getItemByItemId(item_id);
+        if (item) {
+            var html = Trader.buy_popup_xhtml.fillValues({
+                buy_img: item.getImgEl()[0].src,
+                buy_popup_price: item.getBuyPrice(),
+                buy_popup_item_name: item.getName()
+            });
+            var coords = $(Trader.window.divMain).position();
+            new west.gui.Dialog(item.getName(), html).setX(coords.left).setY(coords.top).addButton('yes', function() {
+                var totalAmount = $('#xsht_item_buy_amount').val();
+                progressBar = new west.gui.Progressbar(0, totalAmount);
+                Trader.initProgress(progressBar);
+                for (var i = 0; i < totalAmount; i++)
+                    if ($('#xsht_item_buy_amount').val() > 27)
+                        setTimeout(Trader.buyItem, i * 1000, item);
+                    else
+                        Trader.buyItem(item);
+            }).addButton('no', function() {
+                Trader.cancelBuy();
+            }).setModal(true, true).show();
+        }
+    };
+
+    Trader.buyItem = function(item) {
+        item.getImgEl().css('opacity', '0.3');
+        Ajax.remoteCall(Trader.types[Trader.type], 'buy', {
+            item_id: item.obj.item_id,
+            town_id: Trader.id,
+            last_inv_id: Bag.getLastInvId()
+        }, function(json) {
+            if (json.error) {
+                buyStatusText = json.error;
+                buyStatus = UserMessage.TYPE_ERROR;
+                Trader.increaseProgress();
+                return new UserMessage(json.error, UserMessage.TYPE_ERROR).show();
+            } else {
+                if (json.expressoffer) {
+                    if (progressBar.maxValue == 1)
+                        Premium.confirmUse(json.expressoffer + " " + Bag.getLastInvId(), 'Express delivery', "You aren\'t currently in this town. But this item can be delivered to you immediately for a few nuggets.", json.price);
+                    buyStatusText = "You are not in the town!"
+                    buyStatus = UserMessage.TYPE_ERROR;
+                    Trader.increaseProgress();
+                } else {
+                    Trader.handleBuyResponse(json);
+                    buyStatusText = "All the products were bought.";
+                    buyStatus = UserMessage.TYPE_SUCCESS;
+                    if (Trader.type == "item_trader") {
+                        item.divMain.remove();
+                    }
+                }
+            }
+            item.getImgEl().css('opacity', '1.0');
+            Trader.increaseProgress();
+        });
+        Trader.cancelBuy();
+    };
+
+    Trader.updateTimer = function() {
+        var averageTime = (new Date().getTime() / 1000 - Trader.startTime) / progressBar.value;
+        var remainingTime = averageTime * (progressBar.maxValue - progressBar.value);
+        var minutes = parseInt(remainingTime / 60) % 60;
+        var seconds = Math.round(remainingTime % 60);
+        $("#xsht_load_screen #xsht_bar_timer").html(minutes + ":" + (seconds < 10 ? "0" + seconds : seconds));
+    };
+}
+var enableTaskKiller = function() {
+    var icon = $('<div></div>').attr({
+        'title': "Cancel all jobs",
+        'class': 'menulink'
+    }).css({
+        'background': 'url(http://puu.sh/bKC6c/ffbdf2ca37.jpg)',
+        'background-position': '0px 0px'
+    }).mouseleave(function() {
+        $(this).css("background-position", "0px 0px");
+    }).mouseenter(function(e) {
+        $(this).css("background-position", "25px 0px");
+    }).click(function() {
+        var n = TaskQueue.queue.length;
+        for (i = 0; i < n; i++) {
+            TaskQueue.cancel(i);
+        }
+    });
+
+    var fix = $('<div></div>').attr({
+        'class': 'menucontainer_bottom'
+    });
+
+    $("#toggleTaskQueue").append($('<div></div>').attr({
+        'class': 'ui_menucontainer',
+        'id': 'taskKiller'
+    }).css({
+        "position": "relative",
+        "right": "125px",
+        "top": "30px",
+        "z-index": "-1"
+    }).append(icon).append(fix));
 }
 var enableNeonXP = function() {
     var deg = 10;
@@ -229,7 +380,7 @@ var changeFeatureStatus = function(key) {
     var s2 = localStorage.getItem('magicbundle_feature_' + key);
     if (s1 != s2) {
         return "Error"; //Should never happen, hopefully.
-    } else { 
+    } else {
         if (s1 == "activated") {
             new UserMessage("'" + MagicFeatures[key]["fullName"] + "' is now disabled.").show();
             MagicFeatures[key]['status'] = "deactivated";
