@@ -1,3 +1,20 @@
+// ==UserScript==
+// @name         The West Magic
+// @version      2.0
+// @description  Because magic is awesome!
+// @author       Alin "xShteff" Olaru
+// @website      https://xshteff.github.io
+// @include      *.the-west.*/game.php*
+// @downloadURL  https://xshteff.github.io/userscripts/magic.user.js
+// @updateURL    https://xshteff.github.io/userscripts/magic.user.js
+// ==/UserScript==
+
+/*
+    COPYRIGHT
+    End users are licensed the right to download the code into their web browser(s) for standard and reasonable usage only.
+    If you want the script translated, you shall contact the script owner for this.
+*/
+
 /*
  * Building an object containing all the features and it's data.
  * @type {Object}
@@ -46,18 +63,103 @@ var enableFeature = function(key) {
             enableNotifications();
             break;
         case "veteran":
-
+            enableVPCounter();
             break;
         case "taskkiller":
 
             break;
         case "jobdesign":
-
+            enableJobRework();
             break;
         case "multipurchase":
 
             break;
     }
+}
+
+var requestNotification = function() {
+    if (!window.Notification)
+        new UserMessage("Sorry, notifications are not supported.").show();
+    else
+        Notification.requestPermission(function(p) {
+            if (p === 'denied') {
+                new UserMessage("Notifications are disabled!").show();
+                requestNotification();
+            } else if (p === 'granted') {
+                new UserMessage("Notifications have been enabled!").show();
+            }
+
+        });
+}
+
+var enableVPCounter = function() {
+    var valText = $('<span>').css({
+        'position': 'absolute',
+        'right': '5px',
+        'text-shadow': '1px 1px 1px #000'
+    }).attr('id', 'magic_vp_value').text('0');
+
+    var vetIcon = $('<span>').attr('class', 'tw-currency curr-veteran').css({
+        'position': 'absolute',
+        'left': '0px'
+    });
+
+    var vetValue = $('<div>').attr('class', 'value').css({
+        'position': 'absolute',
+        'left': '32px',
+        'top': '3px',
+        'width': '115px',
+        'height': '25px',
+        'line-height': '25px',
+        'pading': '0 5px',
+        'color': '#f8c57c',
+        'font-size': '13pt',
+        'text-align': 'right',
+        'user-select': 'none',
+        'background': 'url("https://westzzs.innogamescdn.com/images/interface/custom_unit_counter_sprite.png?2") no-repeat 0 -36px',
+        'z-index': '1'
+    }).append(valText).prepend(vetIcon);
+
+    var vetCounter = $('<div>').attr({
+        'class': 'xsht_custom_unit_counter',
+        'id': 'magic_vp_counter',
+        'title': '<b>Veteran Points</b> <br>You earn Veteran Points by fighting on Adventures! <br>Veteran points can be spent in the Union Pacific Store.'
+    }).css({
+        'position': 'absolute',
+        'top': '32px',
+        'left': '50%',
+        'margin-left': '-250px',
+        'z-index': '16',
+        'width': '180px',
+        'height': '36px',
+        'text-align': 'left',
+        'text-shadow': '1px 1px 1px #000',
+        'background': 'url("https://westzzs.innogamescdn.com/images/interface/custom_unit_counter_sprite.png?2") no-repeat 50% 0',
+        'cursor': 'pointer'
+    }).append(vetValue).click(function() {
+        west.window.shop.open();
+    });
+
+    $("#ui_topbar").before(vetCounter)
+    WestUi.TopBar._redraw($("#magic_vp_value"), Character.veteranPoints);
+    EventHandler.listen("veteran_points_changed", function(amount) {
+        WestUi.TopBar._redraw($("#magic_vp_value"), Character.veteranPoints);
+    });
+}
+
+var enableJobRework = function() {
+    JobWindow.getJobAmount = function() {
+        var amount = parseInt(this.window.$("#tw_work_menu_value").children("option").filter(":selected").text(), 10);
+        return isNaN(amount) ? 1 : amount;
+    };
+
+    JobWindow.getJobAmountSelector = function() {
+        var title = _('How often do you want to start the job?').escapeHTML(),
+            cb = this.setJobAmount.bind(this);
+        return $(s('<div style="position:relative;top:-50px;left:20px;" title="%1">' +
+            '<select id="tw_work_menu_value">' + '      <option value="1">1</option>' + '      <option value="2">2</option>' + '      <option value="3">3</option>' + '      <option value="4">4</option>' + '      <option value="5">5</option>' + '      <option value="6">6</option>' + '      <option value="7">7</option>' + '      <option value="8">8</option>' + '      <option value="9">9</option>' + '    </select> ' +
+            '</div>', title)).click(cb).mousewheel(cb);
+    };
 }
 
 var enableNotifications = function() {
@@ -88,11 +190,14 @@ var initialiseStorage = function() {
             MagicFeatures[key]["status"] = "deactivated";
         } else if (localStorage.getItem("magicbundle_feature_" + key) === "activated") {
             MagicFeatures[key]["status"] = "activated";
+            enableFeature(key);
         } else if (localStorage.getItem("magicbundle_feature_" + key) === "deactivated") {
             MagicFeatures[key]["status"] = "deactivated";
         }
     })
 }
+
+
 
 /*
  * Changing the status of a feature, from deactivated to activated and the other way around.
@@ -105,9 +210,11 @@ var changeFeatureStatus = function(key) {
         return "Error"; //Should never happen, hopefully.
     } else {
         if (s1 == "activated") {
+            new UserMessage("'" + MagicFeatures[key]["fullName"] + "' is now disabled.").show();
             MagicFeatures[key]['status'] = "deactivated";
             localStorage.setItem('magicbundle_feature_' + key, "deactivated");
         } else {
+            new UserMessage("'" + MagicFeatures[key]["fullName"] + "' is now enabled.").show();
             MagicFeatures[key]['status'] = "activated";
             localStorage.setItem('magicbundle_feature_' + key, "activated");
         }
@@ -276,21 +383,7 @@ var initialiseButton = function() {
  */
 var initialiseScript = function() {
     initialiseStorage();
-    MagicWindow.open();
+    initialiseButton();
 }
 
-var requestNotification = function() {
-    if (!window.Notification)
-        new UserMessage("Sorry, notifications are not supported.").show();
-    else
-        Notification.requestPermission(function(p) {
-            if (p === 'denied') {
-                new UserMessage("Notifications are disabled!").show();
-                requestNotification();
-            } else if (p === 'granted') {
-                new UserMessage("Notifications have been enabled!").show();
-            }
-
-        });
-}
 initialiseScript();
