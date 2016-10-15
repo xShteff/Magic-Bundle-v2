@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         The West Magic
-// @version      2.0
+// @version      2.1
 // @description  Because magic is awesome!
 // @author       Alin "xShteff" Olaru
 // @website      https://xshteff.github.io
