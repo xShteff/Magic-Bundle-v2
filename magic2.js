@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         The West Magic
-// @version      2.0
+// @version      2.1
 // @description  Because magic is awesome!
 // @author       Alin "xShteff" Olaru
 // @website      https://xshteff.github.io
@@ -370,18 +370,52 @@ script.textContent = '(' + (function() {
             });
         }
     }
+    /*
+     * For some reason displaying coloured message brings out some HTML tags as well. Using this to remove them.
+     */
+    var stripHTML = function(html)
+    {
+       var tmp = document.createElement("DIV");
+       tmp.innerHTML = html;
+       return tmp.textContent || tmp.innerText || "";
+    }
 
     /*
      * It enables the better-notifications feature. This feature replaces the standard in-game popup.
     */
     var enableNotifications = function() {
+        /*Keeping this here for later.
+        var emotes = {
+            "sore": ":/",
+            "invader": "=:)",
+            "angry": ">:(",
+            "cry": ":'(",
+            "smile": ":)",
+            "grin": ":D",
+            "frown": ":(",
+            "smirk": ";)",
+            "tongue": ":P",
+            "ohmy": ":o",
+            "muted": ":x",
+            "silent": ":|",
+            "palm": ">_<",
+            "nc": "-.-",
+            "happy": "^_^",
+            "oo": "o_O",
+            "xx": "x_x",
+            "cry": "T_T",
+            "elpollodiablo": "el pollo diablo!",
+            "elpollodiablo_mirror": "!el pollo diablo",
+            "elpollodiablo_front": "el pollo diablo?!"
+        };*/
         requestNotification();
         EventHandler.listen("chat_tell_received", function(room) {
             function notify() {
                 var regex = /<td(.*)chat_text(.*?)>(.*)<\/td>/ig;
                 var final = regex.exec(room.history[room.history.length - 1])[3];
+                console.log(final);
                 new Notification('New Message from ' + room.client.pname, {
-                    body: final.replace(/<img.*?>/g, ""),
+                    body: stripHTML(final.replace(/<img.*?>/g, "")),
                     icon: 'http://puu.sh/oaqQS/1c5bbb0c5c.jpg'
                 });
             }
