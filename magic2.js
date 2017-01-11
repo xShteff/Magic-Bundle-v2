@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         The West Magic
-// @version      2.1
+// @version      2.2
 // @description  Because magic is awesome!
 // @author       Alin "xShteff" Olaru
 // @website      https://xshteff.github.io
@@ -623,7 +623,7 @@ script.textContent = '(' + (function() {
             'class': 'menucontainer_bottom'
         });
 
-        $("#ui_menubar .ui_menucontainer :last").after($('<div></div>').attr({
+        $("#ui_menubar").append($('<div></div>').attr({
             'class': 'ui_menucontainer',
             'id': 'magicbundle_init_button'
         }).append(icon).append(cap));
