@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         The West Magic
-// @version      2.2
+// @version      2.3
 // @description  Because magic is awesome!
 // @author       Alin "xShteff" Olaru
 // @website      https://xshteff.github.io
@@ -25,7 +25,7 @@ script.textContent = '(' + (function() {
     var MagicFeatures = {
         'notifications': {
             'status': '',
-            'iconURL': 'https://westzzs.innogamescdn.com/images/interface/chat/chat.gif',
+            'iconURL': 'https://westzz.innogamescdn.com/images/interface/chat/chat.gif',
             'releaseDate': '16th September 2014',
             'fullName': 'Better Notifications',
             'description': 'A simple userscript that displays a notification every time you get a new private message. Please allow the notifications to be displayed otherwise this feature will not work.'
@@ -46,7 +46,7 @@ script.textContent = '(' + (function() {
         },
         'jobdesign': {
             'status': '',
-            'iconURL': 'https://westzzs.innogamescdn.com/images/icons/hammer.png',
+            'iconURL': 'https://westzz.innogamescdn.com/images/icons/hammer.png',
             'releaseDate': '31st October 2014',
             'fullName': 'Job Window Re-Design',
             'description': 'An another script for lazy people! This userscript will replace the counter inside the job window, with a custom dropdown! How amazing is that?'
@@ -86,7 +86,8 @@ script.textContent = '(' + (function() {
                 enableJobRework();
                 break;
             case "multipurchase":
-                enableMultiPurchase();
+                if(Game.locale !== 'de_DE')
+                    enableMultiPurchase();
                 break;
             case "neonxpbar":
                 enableNeonXP();
@@ -413,7 +414,6 @@ script.textContent = '(' + (function() {
             function notify() {
                 var regex = /<td(.*)chat_text(.*?)>(.*)<\/td>/ig;
                 var final = regex.exec(room.history[room.history.length - 1])[3];
-                console.log(final);
                 new Notification('New Message from ' + room.client.pname, {
                     body: stripHTML(final.replace(/<img.*?>/g, "")),
                     icon: 'http://puu.sh/oaqQS/1c5bbb0c5c.jpg'
@@ -490,7 +490,6 @@ script.textContent = '(' + (function() {
      * @returns {HTMLTableRow}
      */
     var buildToggleTableRow = function(key, status) {
-        console.log(status);
         var tColOne = $('<td>').text('Toggle: ').css('font-weight', 'bold');
         var toggleButton = $('<div>').attr({
             'id': 'xsht-toggle-' + key,
@@ -575,7 +574,10 @@ script.textContent = '(' + (function() {
                 'id': 'magic-' + key,
                 'display': 'none'
             }).html(contentTable);
-            MagicWindow.window.addTab('<img src="' + MagicFeatures[key]["iconURL"] + '">', key, tabclick).appendToContentPane(par);
+            if(key === 'multipurchase' && Game.locale === 'de_DE')
+                console.log('MultiPurchase is apparently not legal on the German Server. Sorry! <3');
+            else
+                MagicWindow.window.addTab('<img src="' + MagicFeatures[key]["iconURL"] + '">', key, tabclick).appendToContentPane(par);     
         });
 
         this.showTab(tab);
@@ -642,10 +644,9 @@ script.textContent = '(' + (function() {
                 scriptInfo += "<span style='color:red;'>" + MagicFeatures[key]["status"] + "</span></br>";
             }
         });
-        scriptInfo += "<h1>Other scripts:</h1>";
-        scriptInfo += "<li><a href='https://xshteff.github.io/userscripts/twbf.user.js' target='_blank'>TW Best Friends</a>";
-        scriptInfo += "<li><a href='https://xshteff.github.io/userscripts/kappa.user.js' target='_blank'>TW Kappa</a>";
-        scriptInfo += "<li><a href='https://xshteff.github.io/userscripts/twzoom.user.js' target='_blank'>TW Zoom</a></ul>";
+        scriptInfo += "<h1>Originally built by xShteff</h1>";
+        scriptInfo += "<p><b>If you want to contribute to any of my scripts you are welcome to contact me on GitHub.</b></p>";
+
         window.scriptyscript = {
             script: TheWestApi.register('twmagicbundle', 'The West Magic', '2.1', Game.version.toString(), 'xShteff', 'https://xshteff.github.io'),
             setGui: function() {
