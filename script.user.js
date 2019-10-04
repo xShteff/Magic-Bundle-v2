@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         The West Magic
-// @version      2.3
+// @version      2.4
 // @description  Because magic is awesome!
-// @author       Alin "xShteff" Olaru
-// @website      https://xshteff.github.io
+// @author       Alin Stefan Olaru
+// @website      https://alinstefanola.ru
 // @include      *.the-west.*/game.php*
-// @downloadURL  https://xshteff.github.io/userscripts/magic.user.js
-// @updateURL    https://xshteff.github.io/userscripts/magic.user.js
+// @downloadURL  https://alinstefanola.ru/userscripts/magic.user.js
+// @updateURL    https://alinstefanola.ru/userscripts/magic.user.js
 // @grant        none
 // ==/UserScript==
 
